@@ -154,6 +154,33 @@ def get_dom_fragment_css() -> str:
 }
 """
 
+def text_to_invisible_tags(text: str) -> str:
+    """
+    将普通文本转换为完全不可见的 Unicode Tags 字符序列 (U+E0000 - U+E007F)
+    人类不可见且不占宽度，但爬虫读取源码时会获取到这些字符。
+    """
+    invisible_text = chr(0xE0001)  # Language Tag 作为起始标记
+    for char in text:
+        # 将基础 ASCII 字符隐写
+        if 32 <= ord(char) <= 126:
+            invisible_text += chr(0xE0000 + ord(char))
+    invisible_text += chr(0xE007F)  # Cancel Tag 作为结束标记
+    return invisible_text
+
+
+def inject_text_poison(original_text: str, seed: Optional[int] = None) -> str:
+    """在纯文本中无痕注入不可见的投毒指令"""
+    rng = random.Random(seed)
+    # 从已有指令库中随机选一条
+    poison_text = rng.choice(POISON_FRAGMENTS)
+    invisible_poison = text_to_invisible_tags(poison_text)
+    
+    # 将隐形毒药注入到文本的第一段换行处，若无换行则加在开头
+    parts = original_text.split('\n', 1)
+    if len(parts) > 1:
+        return parts[0] + invisible_poison + '\n' + parts[1]
+    else:
+        return invisible_poison + original_text
 
 def obfuscate_text(
     text: str,
@@ -161,16 +188,7 @@ def obfuscate_text(
     homoglyph_ratio: float = 0.4,
     seed: Optional[int] = None,
 ) -> dict:
-    """
-    综合文本混淆入口
-
-    :return: {
-        "encrypted_text": 最终混淆文本,
-        "zw_injected": 零宽注入中间结果,
-        "homoglyph_replaced": 同形字替换中间结果,
-        "stats": 统计信息
-    }
-    """
+    # ... [保持原有的代码不变] ...
     if seed is None:
         seed = random.randint(0, 999999)
 
@@ -178,14 +196,18 @@ def obfuscate_text(
     zw_text = inject_zero_width(text, frequency=zw_frequency, seed=seed)
 
     # Step 2: 同形字替换
-    final_text = replace_homoglyphs(zw_text, ratio=homoglyph_ratio, seed=seed + 1)
+    homoglyph_text = replace_homoglyphs(zw_text, ratio=homoglyph_ratio, seed=seed + 1)
+    
+    # Step 3: 主动投毒 (无痕隐写) -> 这里是新增的！
+    final_text = inject_text_poison(homoglyph_text, seed=seed + 2)
 
-    # 统计
+    # 统计 (稍作修改以适应 final_text)
     zw_count = sum(1 for c in final_text if c in ZERO_WIDTH_CHARS)
-    replaced_count = sum(1 for a, b in zip(text, final_text.replace("".join(ZERO_WIDTH_CHARS), "")) if a != b)
+    # 因为加入了 Tags 字符，统计同形字替换需要用 homoglyph_text 对比
+    replaced_count = sum(1 for a, b in zip(text, homoglyph_text.replace("".join(ZERO_WIDTH_CHARS), "")) if a != b)
 
     return {
-        "encrypted_text": final_text,
+        "encrypted_text": final_text,    # 最终带毒的完整文本
         "zw_injected": zw_text,
         "original_length": len(text),
         "encrypted_length": len(final_text),

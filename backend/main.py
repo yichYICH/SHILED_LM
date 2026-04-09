@@ -50,7 +50,7 @@ class EncryptRequest(BaseModel):
     zw_frequency: float = Field(default=0.2, ge=0.0, le=1.0, description="零宽字符注入频率")
     homoglyph_ratio: float = Field(default=0.1, ge=0.0, le=1.0, description="同形字替换比例")
     dom_intensity: str = Field(default="medium", pattern="^(low|medium|high)$", description="DOM混淆强度")
-
+    export_mode: str = Field(default="hosted_link", pattern="^(hosted_link|pure_text)$", description="导出模式")
 
 class PageListItem(BaseModel):
     """页面列表项"""
@@ -63,8 +63,8 @@ class PageListItem(BaseModel):
 class EncryptResponse(BaseModel):
     """文本加密响应"""
     encrypted_text: str
-    page_id: str
-    page_url: str
+    page_id: Optional[str] = None
+    page_url: Optional[str] = None
     stats: dict
     original_length: int
     encrypted_length: int
@@ -137,7 +137,15 @@ def encrypt_text_endpoint(request: EncryptRequest):
             homoglyph_ratio=request.homoglyph_ratio,
             seed=random.randint(0, 999999),
         )
-
+        if request.export_mode == "pure_text":
+            return EncryptResponse(
+                encrypted_text=result["encrypted_text"], # 返回带隐写毒药的最终文本
+                page_id=None,
+                page_url=None,
+                stats=result["stats"],
+                original_length=result["original_length"],
+                encrypted_length=result["encrypted_length"],
+            )
         # 生成动态字体映射
         # 获取混淆结果的最终文本
         obfuscated_str = result["encrypted_text"]

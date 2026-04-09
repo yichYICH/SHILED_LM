@@ -1,4 +1,4 @@
-# IP Shield - 知识产权主动防护平台
+# SHIELD-LM (Shielding High-value Information from Extraction by Large Models) - 知识产权主动防护平台
 
 基于文本隐写与动态字体混淆的主动防御式知识产权保护系统，防止AI爬虫采集原创内容用于大模型训练。
 
@@ -13,12 +13,14 @@
 ## 🛠 技术架构
 
 ### 后端技术栈
+
 - **框架**: FastAPI (Python)
 - **算法**: 零宽字符注入、同形字替换、字体映射生成
 - **数据库**: SQLite (存储保护页面数据)
 - **API**: RESTful API 设计，支持跨域请求
 
 ### 前端技术栈
+
 - **框架**: Vue.js 3 + Vite
 - **UI库**: Element Plus
 - **状态管理**: Pinia
@@ -69,16 +71,20 @@ project/
 ### 后端启动
 
 1. 进入后端目录并安装依赖：
+
 ```bash
 cd backend
 pip install -r requirements.txt
 ```
 
 2. 启动FastAPI服务器：
+
 ```bash
 python main.py
 ```
+
 或使用uvicorn：
+
 ```bash
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
@@ -88,12 +94,14 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ### 前端启动
 
 1. 进入前端目录并安装依赖：
+
 ```bash
 cd frontend
 npm install
 ```
 
 2. 启动开发服务器：
+
 ```bash
 npm run dev
 ```
@@ -107,6 +115,7 @@ npm run dev
 后端使用SQLite数据库，数据库文件将自动创建在 `backend/protected_pages.db`。
 
 主要配置参数（在 `backend/main.py` 中）：
+
 - CORS设置：允许的源域名
 - 服务器端口：默认8000
 - 数据库路径：自动管理
@@ -114,6 +123,7 @@ npm run dev
 ### 前端配置
 
 前端配置通过Vite配置文件 `frontend/vite.config.js` 管理：
+
 - 开发服务器端口：5173
 - 代理设置：自动代理API请求到后端
 - 构建配置：生产环境优化
@@ -121,6 +131,7 @@ npm run dev
 ### 保护强度配置
 
 用户可动态调整的参数：
+
 - **零宽字符注入频率**: 0-100%，控制不可见字符的注入密度
 - **同形字替换比例**: 0-100%，控制视觉相似字符的替换比例
 - **DOM混淆强度**: 低/中/高，控制DOM碎片化程度
@@ -176,6 +187,7 @@ curl -X POST "http://127.0.0.1:8000/api/encrypt-text" \
 ### 防护效果测试
 
 使用以下工具模拟爬虫攻击：
+
 - **Scrapy**: 基础HTML解析
 - **Playwright/Puppeteer**: JavaScript执行爬虫
 - **OCR工具**: 文字识别测试
@@ -211,15 +223,19 @@ curl -X POST "http://127.0.0.1:8000/api/encrypt-text" \
 ## 📚 技术原理
 
 ### 零宽字符注入
+
 利用Unicode中的不可见字符（ZWNJ, ZWSP, ZWJ）注入文本，破坏大模型的分词逻辑。
 
 ### 同形字替换
+
 将拉丁字母替换为视觉相似的西里尔/希腊字母，对人眼透明但对词向量编码产生偏移。
 
 ### 动态字体映射
+
 每次访问生成随机字符映射，HTML源码存储代理字符，浏览器通过JS还原显示正确内容。
 
 ### DOM碎片化
+
 将文本拆分为乱序DOM片段，通过CSS重新排序，增加爬虫解析难度。
 
 ## 🤝 贡献指南
@@ -237,6 +253,7 @@ curl -X POST "http://127.0.0.1:8000/api/encrypt-text" \
 ## 📞 技术支持
 
 如遇问题，请：
+
 1. 查看API文档 `http://127.0.0.1:8000/docs`
 2. 检查浏览器控制台错误信息
 3. 查看后端服务器日志
